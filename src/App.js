@@ -25,10 +25,10 @@ function App() {
       shouldReconnect: (closeEvent) => true,
   });
   const [messageHistory, setMessageHistory] = useState([]);
-  const handleClickSendMessage = useCallback(() => {
-    sendMessage('make_turn#{"x":0,"y":0}');
+  const handleClickSendMessage = (x, y) => {
+    sendMessage(`make_turn#{"x":${x},"y":${y}}`);
     console.log("lastMessage="+lastMessage);
-  }, []);
+  };
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
     [ReadyState.OPEN]: 'Open',
@@ -50,6 +50,7 @@ function App() {
     //};
     if(lastMessage !== null) {
       console.log("received =" + lastMessage);
+      setGameState(JSON.parse(lastMessage.data));
       setMessageHistory((prev) => prev.concat(lastMessage));
       try {
         console.log("parsed to " + JSON.parse(lastMessage));
@@ -60,27 +61,33 @@ function App() {
   }, [lastMessage, setMessageHistory]);
   return (
     <div className="App">
+      <div>{gameState.connectedPlayers!==undefined && gameState.connectedPlayers.length === 1 ? "waiting for player O" : `Player ${gameState.playerAtTurn}'s turn`}</div>
       <table>
         <tbody>
           {gameState.field.map((subArray, index)=>(
             <tr>              
-              <td><button onClick={handleClickSendMessage} style={{width: '30px', height: '30px'}}>{subArray[0]}</button></td>
-              <td><button style={{width: '30px', height: '30px'}}>{subArray[1]}</button></td> 
-              <td><button style={{width: '30px', height: '30px'}}>{subArray[2]}</button></td>
+              <td><Square y={index} x={0} value={subArray[0]} handleClickSendMessage={handleClickSendMessage}></Square></td>
+              <td><Square y={index} x={1} value={subArray[1]} handleClickSendMessage={handleClickSendMessage}></Square></td> 
+              <td><Square y={index} x={2} value={subArray[2]} handleClickSendMessage={handleClickSendMessage}></Square></td>
             </tr>
           ))}
         </tbody>
       </table>
       <div>readystate is {readyState}, {connectionStatus}</div>
       <span>The WebSocket is currently {connectionStatus}</span>
-      {lastMessage ? <span>Last message: {lastMessage.data}</span> : null}
-      <ul>
-        {messageHistory.map((message, idx) => (
-          <span key={idx}>{message ? message.data : null}</span>
-        ))}
-      </ul>
+      <div>{lastMessage ? <span>Last message: {lastMessage.data}</span> : null}</div>
+      
     </div>
   );
 }
 
+const Square = (props)=> {
+  return (
+  <button onClick={(e)=>{
+    console.log("Clicked="+e.target.value);
+    props.handleClickSendMessage(props.x, props.y)
+  }} 
+  style={{width: '30px', height: '30px'}}>{props.value}</button>
+  );
+}
 export default App;
