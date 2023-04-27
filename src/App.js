@@ -27,7 +27,7 @@ function App() {
   const [messageHistory, setMessageHistory] = useState([]);
   const handleClickSendMessage = (x, y) => {
     sendMessage(`make_turn#{"x":${x},"y":${y}}`);
-    console.log("lastMessage="+lastMessage);
+    console.log("lastMessage="+JSON.stringify(lastMessage.data));
   };
   const connectionStatus = {
     [ReadyState.CONNECTING]: 'Connecting',
@@ -49,19 +49,18 @@ function App() {
     //  console.log("WebSocket socket closed.")
     //};
     if(lastMessage !== null) {
-      console.log("received =" + lastMessage);
+      console.log("received =" + JSON.stringify(lastMessage.data));
       setGameState(JSON.parse(lastMessage.data));
       setMessageHistory((prev) => prev.concat(lastMessage));
-      try {
-        console.log("parsed to " + JSON.parse(lastMessage));
-      } catch(e) {
-        console.log("parse failed");
-      }
     }
   }, [lastMessage, setMessageHistory]);
   return (
     <div className="App">
-      <div>{gameState.connectedPlayers!==undefined && gameState.connectedPlayers.length === 1 ? "waiting for player O" : `Player ${gameState.playerAtTurn}'s turn`}</div>
+      <div>{!gameState.connectedPlayers.includes("X") && <span>Waiting for Player X</span>}</div>
+      <div>{gameState.connectedPlayers.includes("X") && !gameState.connectedPlayers.includes("O") && <span>Waiting for Player O</span>}</div>
+      <div>{gameState.connectedPlayers.includes("X") && gameState.connectedPlayers.includes("O") 
+      && gameState.isBoardFull === false && !gameState.winningPlayer 
+      && <span>{gameState.playerAtTurn === "X" ? 'X is next' : 'O is next'}</span>}</div>
       <table>
         <tbody>
           {gameState.field.map((subArray, index)=>(
@@ -73,9 +72,11 @@ function App() {
           ))}
         </tbody>
       </table>
-      <div>readystate is {readyState}, {connectionStatus}</div>
+      <div>{gameState.winningPlayer !== null && gameState.winningPlayer !== undefined ? `Player ${gameState.winningPlayer} won!` : 
+      (gameState.isBoardFull === true && "It's a draw!")}</div>
+      {/*<div>readystate is {readyState}, {connectionStatus}</div>
       <span>The WebSocket is currently {connectionStatus}</span>
-      <div>{lastMessage ? <span>Last message: {lastMessage.data}</span> : null}</div>
+          <div>{lastMessage ? <span>Last message: {lastMessage.data}</span> : null}</div>*/}
       
     </div>
   );
